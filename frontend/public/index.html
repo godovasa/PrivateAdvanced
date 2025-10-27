@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🧘 Secret Anti‑Stress Mode — Zama FHEVM</title>
+  <style>
+    :root{
+      --bg:#fafbfe; --ink:#0f172a; --muted:#64748b; --line:rgba(15,23,42,.08);
+      --card:#ffffff; --glass:rgba(255,255,255,.7); --glow:#8b5cf6; --mint:#10b981; --rose:#ef4444; --sky:#06b6d4;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Inter",Segoe UI,Roboto,sans-serif;color:var(--ink);background:
+      radial-gradient(900px 600px at 100% 0%, rgba(139,92,246,.10), transparent 60%),
+      radial-gradient(700px 500px at 0% 100%, rgba(16,185,129,.10), transparent 60%),
+      var(--bg);
+    }
+    .wrap{max-width:1100px;margin:0 auto;padding:22px}
+
+    /* Header */
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
+      background:conic-gradient(from 220deg,var(--glow),#60a5fa,#22d3ee,#34d399,var(--glow)); color:white;font-weight:900;
+      box-shadow:0 12px 30px rgba(139,92,246,.25)}
+    h1{margin:0;font-size:clamp(18px,3.6vw,28px)}
+    .sub{color:var(--muted);font-size:13px}
+    .row{display:flex;flex-wrap:wrap;gap:8px}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff}
+    button{appearance:none;border:0;cursor:pointer;padding:12px 16px;border-radius:12px;font-weight:800;letter-spacing:.2px;color:white;
+      background:linear-gradient(135deg,#60a5fa,#22d3ee); box-shadow:0 8px 24px rgba(34,211,238,.3); transition:transform .15s ease,filter .15s ease}
+    button:hover:not(:disabled){transform:translateY(-1px);filter:saturate(1.05)}
+    button:disabled{opacity:.55;cursor:not-allowed;filter:saturate(.8)}
+    .ghost{background:#eef2ff;color:#111827;box-shadow:none}
+
+    /* Grid */
+    .grid{display:flex;flex-direction:column;gap:16px}
+    @media (max-width:980px){.grid{flex-direction:column}}
+
+    /* Cards */
+    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(2,6,23,.06);overflow:hidden}
+    .card .head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,rgba(255,255,255,.6))}
+    .card .body{padding:16px}
+    .bar{height:6px;background:linear-gradient(90deg,var(--glow),#60a5fa,#22d3ee,#34d399);opacity:.25}
+
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media (max-width:560px){.grid2{grid-template-columns:1fr}}
+
+    .field label{display:block;margin-bottom:6px;color:var(--muted);font-weight:600;font-size:12px}
+    .input{width:100%;padding:12px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;outline:none;transition:border-color .15s ease}
+    .input:focus{border-color:#93c5fd;box-shadow:0 0 0 3px rgba(147,197,253,.25)}
+
+    .toggle{display:flex;gap:8px;align-items:center}
+    .tag{font-weight:800;color:#0f172a;background:#e2e8f0;border:1px solid var(--line);padding:6px 10px;border-radius:999px}
+
+    .status{margin-top:12px;padding:12px;border-radius:12px;border:1px dashed var(--line);background:#f8fafc;color:#0f172a}
+    .result{margin-top:10px;padding:14px;border-radius:12px;border:1px solid var(--line);text-align:center;font-weight:900;font-size:16px}
+    .ok{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
+    .warn{background:#fff7ed;color:#7c2d12;border-color:#fed7aa}
+
+    .hint{font-size:12px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">F</div>
+        <div>
+          <h1>Secret Anti‑Stress Mode <span class="sub">· Zama FHEVM</span></h1>
+          <div class="sub">Private biometrics in, public/optional flag out. No raw data leaves you.</div>
+        </div>
+      </div>
+      <div class="row">
+        <span id="pillNet" class="pill">Network: <b>Sepolia</b></span>
+        <span id="pillState" class="pill">Status: <b>Disconnected</b></span>
+        <button id="btnConnect">Connect Wallet</button>
+      </div>
+    </header>
+
+    <section class="grid">
+      <!-- Left: User check -->
+      <div class="card">
+        <div class="head">
+          <b>My Check</b>
+          <div class="toggle">
+            <span class="tag" id="modeTag">Private</span>
+            <button id="btnToggle" class="ghost">Switch Mode</button>
+          </div>
+        </div>
+        <div class="bar"></div>
+        <div class="body">
+          <div class="grid2">
+            <div class="field">
+              <label>Heart rate (BPM)</label>
+              <input id="inpBpm" type="number" min="0" max="250" step="1" class="input" placeholder="e.g., 98" disabled />
+            </div>
+            <div class="field">
+              <label>Stress minutes (last 60m)</label>
+              <input id="inpStress" type="number" min="0" max="180" step="1" class="input" placeholder="e.g., 12" disabled />
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <button id="btnCheck" disabled>Encrypt & Check</button>
+            <button id="btnGetLast" class="ghost" disabled>Get My Last Flag</button>
+          </div>
+          <div id="status" class="status">Connect wallet to start.</div>
+          <div id="out" class="result">—</div>
+        </div>
+      </div>
+
+      <!-- Right: Policy / Owner -->
+      <div class="card">
+        <div class="head"><b>Policy</b><span class="hint">Owner can update thresholds</span></div>
+        <div class="bar"></div>
+        <div class="body">
+          <div id="polView" class="status">—</div>
+          <div id="ownerBox" style="margin-top:12px;display:none">
+            <div class="grid2">
+              <div class="field">
+                <label>BPM threshold</label>
+                <input id="thrBpm" type="number" min="0" max="250" step="1" class="input" placeholder="e.g., 100" />
+              </div>
+              <div class="field">
+                <label>Stress minutes threshold</label>
+                <input id="thrStress" type="number" min="0" max="240" step="1" class="input" placeholder="e.g., 15" />
+              </div>
+            </div>
+            <div class="grid2" style="margin-top:10px">
+              <div class="field">
+                <label>Mode</label>
+                <select id="thrMode" class="input">
+                  <option value="0">OR — break if (BPM ≥ thr) OR (Stress ≥ thr)</option>
+                  <option value="1">AND — break if (BPM ≥ thr) AND (Stress ≥ thr)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>&nbsp;</label>
+                <div class="row">
+                  <button id="btnSetPolicy" class="ghost">Set Policy</button>
+                  <button id="btnDefault" class="ghost">Default</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="hint" style="margin-top:10px">No biometrics are stored or revealed; only a yes/no flag is computed homomorphically.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- SDKs -->
+  <script type="module" crossorigin src="https://cdn.zama.ai/relayer-sdk-js/0.1.2/relayer-sdk-js.js"></script>
+  <script type="module" crossorigin src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/+esm"></script>
+
+  <script type="module">
+    import { BrowserProvider, Contract, getAddress } from "https://cdn.jsdelivr.net/npm/ethers@6.15.0/+esm";
+    import { initSDK, createInstance, SepoliaConfig } from "https://cdn.zama.ai/relayer-sdk-js/0.1.2/relayer-sdk-js.js";
+
+    // ===== Config =====
+    const CONTRACT_ADDRESS = "0xf52178394df1e12f3FFcD394ebbD5d8e95943b2B";
+
+    // Minimal ABI
+    const ABI = [
+      { inputs: [], name: "owner", outputs: [{ type: "address" }], stateMutability: "view", type: "function" },
+      { inputs: [], name: "policy", outputs: [ { type: "uint16" }, { type: "uint16" }, { type: "uint8" } ], stateMutability: "view", type: "function" },
+      { inputs: [], name: "setDefaultPolicy", outputs: [], stateMutability: "nonpayable", type: "function" },
+      { inputs: [ { name: "bpmThr", type: "uint16" }, { name: "stressMinThr", type: "uint16" }, { name: "mode", type: "uint8" } ], name: "setPolicy", outputs: [], stateMutability: "nonpayable", type: "function" },
+      { inputs: [ { name: "bpmExt", type: "bytes32" }, { name: "stressMinExt", type: "bytes32" }, { name: "proof", type: "bytes" } ], name: "checkStressPrivate", outputs: [ { type: "bytes32" } ], stateMutability: "nonpayable", type: "function" },
+      { inputs: [ { name: "bpmExt", type: "bytes32" }, { name: "stressMinExt", type: "bytes32" }, { name: "proof", type: "bytes" } ], name: "checkStressPublic", outputs: [ { type: "bytes32" } ], stateMutability: "nonpayable", type: "function" },
+      { inputs: [], name: "getMyLastDecisionHandle", outputs: [ { type: "bytes32" } ], stateMutability: "view", type: "function" },
+      { anonymous:false, inputs:[ {indexed:true,name:"user",type:"address"}, {indexed:false,name:"decisionHandle",type:"bytes32"}, {indexed:false,name:"isPublic",type:"bool"} ], name:"StressChecked", type:"event"},
+    ];
+
+    // ===== DOM =====
+    const $ = (id) => document.getElementById(id);
+    const pillState = $("pillState");
+    const btnConnect = $("btnConnect");
+    const inpBpm = $("inpBpm");
+    const inpStress = $("inpStress");
+    const btnCheck = $("btnCheck");
+    const btnGetLast = $("btnGetLast");
+    const statusBox = $("status");
+    const outBox = $("out");
+    const polView = $("polView");
+    const ownerBox = $("ownerBox");
+    const thrBpm = $("thrBpm");
+    const thrStress = $("thrStress");
+    const thrMode = $("thrMode");
+    const btnSetPolicy = $("btnSetPolicy");
+    const btnDefault = $("btnDefault");
+    const btnToggle = $("btnToggle");
+    const modeTag = $("modeTag");
+
+    let provider, signer, user, sdk, contract;
+    let modePublic = false; // false=Private, true=Public
+
+    function setStatus(txt){ statusBox.textContent = txt; }
+    function showFlag(v){
+      outBox.classList.remove('ok','warn');
+      if (v === 1 || v === 1n || v === true) {
+        outBox.textContent = '🛑 Break is MANDATORY';
+        outBox.classList.add('warn');
+      } else {
+        outBox.textContent = '✅ Break is OPTIONAL';
+        outBox.classList.add('ok');
+      }
+    }
+    function fmtPol(p){
+      const [bpm, stress, m] = p;
+      const logic = Number(m) === 1 ? 'AND' : 'OR';
+      return `Policy: BPM ≥ ${Number(bpm)} ${logic} Stress ≥ ${Number(stress)}min`;
+    }
+
+    async function loadPolicy(){
+      try {
+        const p = await contract.policy();
+        polView.textContent = fmtPol(p);
+      } catch(e){ polView.textContent = 'Failed to load policy'; console.error(e); }
+    }
+
+    async function ensureSepolia(){
+      const SEPOLIA_HEX = '0xaa36a7';
+      const cid = await window.ethereum.request({ method:'eth_chainId' });
+      if (cid !== SEPOLIA_HEX) await window.ethereum.request({ method:'wallet_switchEthereumChain', params:[{ chainId: SEPOLIA_HEX }] });
+    }
+
+    btnToggle.addEventListener('click', () => {
+      modePublic = !modePublic;
+      modeTag.textContent = modePublic ? 'Public' : 'Private';
+      setStatus(modePublic ? 'Public mode: anyone can public‑decrypt the flag' : 'Private mode: only you can decrypt the flag');
+    });
+
+    // ===== Connect =====
+    btnConnect.addEventListener('click', async () => {
+      try {
+        btnConnect.disabled = true; btnConnect.textContent = 'Connecting…'; setStatus('Connecting wallet…');
+        if (!window.ethereum) throw new Error('MetaMask not found');
+        await ensureSepolia();
+
+        provider = new BrowserProvider(window.ethereum);
+        await provider.send('eth_requestAccounts', []);
+        signer = await provider.getSigner();
+        user = await signer.getAddress();
+        pillState.innerHTML = `Status: <b>${user.slice(0,6)}…${user.slice(-4)}</b>`;
+
+        setStatus('Initializing Zama Relayer SDK…');
+        await initSDK();
+        sdk = await createInstance({ ...SepoliaConfig, network: window.ethereum });
+
+        contract = new Contract(CONTRACT_ADDRESS, ABI, signer);
+        await loadPolicy();
+
+        // Owner panel
+        try {
+          const own = await contract.owner();
+          if (own.toLowerCase() === user.toLowerCase()) ownerBox.style.display = 'block';
+        } catch {}
+
+        // Enable inputs
+        inpBpm.disabled = false; inpStress.disabled = false; btnCheck.disabled = false; btnGetLast.disabled = false;
+        setStatus('Ready. Enter BPM + stress minutes, then Encrypt & Check.');
+
+        // Event (optional)
+        try {
+          contract.on('StressChecked', (u, h, pub) => {
+            if (String(u).toLowerCase() === user.toLowerCase()) {
+              console.log('[Event] StressChecked', { u, h, pub });
+            }
+          });
+        } catch {}
+      } catch(e) {
+        console.error(e);
+        setStatus('❌ ' + (e?.message || e));
+        btnConnect.disabled = false; btnConnect.textContent = 'Connect Wallet';
+      }
+    });
+
+    // ===== Check now =====
+    btnCheck.addEventListener('click', async () => {
+      try {
+        btnCheck.disabled = true; outBox.textContent = '—';
+        const bpm = parseInt(inpBpm.value || '0');
+        const stress = parseInt(inpStress.value || '0');
+        if (bpm < 0 || bpm > 250) throw new Error('BPM must be 0..250');
+        if (stress < 0 || stress > 240) throw new Error('Stress minutes must be 0..240');
+
+        setStatus('Encrypting input…');
+        const buf = sdk.createEncryptedInput(getAddress(CONTRACT_ADDRESS), getAddress(user));
+        buf.add16(BigInt(bpm));
+        buf.add16(BigInt(stress));
+        const { handles, inputProof } = await buf.encrypt();
+
+        setStatus('Submitting to contract…');
+        const hBpm = handles[0]; const hStr = handles[1];
+        let tx;
+        if (modePublic) tx = await contract.checkStressPublic(hBpm, hStr, inputProof, { gasLimit: 2_000_000 });
+        else            tx = await contract.checkStressPrivate(hBpm, hStr, inputProof, { gasLimit: 2_000_000 });
+        const rec = await tx.wait();
+
+        // Try to pick handle from return or event
+        let handle;
+        try { handle = rec.logs ? undefined : undefined; } catch {}
+        try { handle = await contract.getMyLastDecisionHandle(); } catch {}
+
+        if (modePublic) {
+          setStatus('Public decrypting…');
+          const vals = await sdk.publicDecrypt([handle]);
+          const v = Array.isArray(vals) ? vals[0] : vals[handle];
+          showFlag(v);
+          setStatus('✅ Done');
+        } else {
+          setStatus('Preparing user decryption…');
+          const pairs = [ { handle, contractAddress: CONTRACT_ADDRESS } ];
+          const startTs = Math.floor(Date.now()/1000).toString();
+          const days = '7';
+          const kp = sdk.generateKeypair();
+          const eip712 = sdk.createEIP712(kp.publicKey, [CONTRACT_ADDRESS], startTs, days);
+          const sig = await signer.signTypedData(
+            eip712.domain,
+            { UserDecryptRequestVerification: eip712.types.UserDecryptRequestVerification },
+            eip712.message,
+          );
+          const out = await sdk.userDecrypt(pairs, kp.privateKey, kp.publicKey, sig.replace('0x',''), [CONTRACT_ADDRESS], user, startTs, days);
+          const v = out[handle];
+          showFlag(v);
+          setStatus('✅ Decrypted locally');
+        }
+      } catch(e) {
+        console.error(e);
+        setStatus('❌ ' + (e?.message || e));
+      } finally {
+        btnCheck.disabled = false;
+      }
+    });
+
+    // ===== Get my last flag =====
+    btnGetLast.addEventListener('click', async () => {
+      try {
+        btnGetLast.disabled = true; outBox.textContent = '—';
+        const handle = await contract.getMyLastDecisionHandle();
+        if (!handle || /^0x0{64}$/i.test(handle)) { setStatus('No previous checks'); return; }
+
+        if (modePublic) {
+          setStatus('Public decrypting…');
+          const vals = await sdk.publicDecrypt([handle]);
+          const v = Array.isArray(vals) ? vals[0] : vals[handle];
+          showFlag(v); setStatus('✅ Done');
+        } else {
+          setStatus('Preparing user decryption…');
+          const pairs = [ { handle, contractAddress: CONTRACT_ADDRESS } ];
+          const startTs = Math.floor(Date.now()/1000).toString();
+          const days = '7';
+          const kp = sdk.generateKeypair();
+          const eip712 = sdk.createEIP712(kp.publicKey, [CONTRACT_ADDRESS], startTs, days);
+          const sig = await signer.signTypedData(
+            eip712.domain,
+            { UserDecryptRequestVerification: eip712.types.UserDecryptRequestVerification },
+            eip712.message,
+          );
+          const out = await sdk.userDecrypt(pairs, kp.privateKey, kp.publicKey, sig.replace('0x',''), [CONTRACT_ADDRESS], user, startTs, days);
+          const v = out[handle];
+          showFlag(v); setStatus('✅ Decrypted locally');
+        }
+      } catch(e){
+        console.error(e);
+        setStatus('❌ ' + (e?.message || e));
+      } finally { btnGetLast.disabled = false; }
+    });
+
+    // ===== Owner actions =====
+    btnSetPolicy?.addEventListener('click', async () => {
+      try {
+        const b = parseInt(thrBpm.value || '0');
+        const s = parseInt(thrStress.value || '0');
+        const m = parseInt(thrMode.value || '0');
+        const tx = await contract.setPolicy(b, s, m);
+        await tx.wait();
+        await loadPolicy();
+        setStatus('✅ Policy updated');
+      } catch(e){ setStatus('❌ ' + (e?.message || e)); }
+    });
+
+    btnDefault?.addEventListener('click', async () => {
+      try { const tx = await contract.setDefaultPolicy(); await tx.wait(); await loadPolicy(); setStatus('✅ Default policy set'); }
+      catch(e){ setStatus('❌ ' + (e?.message || e)); }
+    });
+  </script>
+</body>
+</html>
